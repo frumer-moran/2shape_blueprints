@@ -1,0 +1,15 @@
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+
+# Large raw image assets
+p1_left.png
+p2_right.png
+stitched_first_floor.png
+table_slice.png
+sift_matches.png
+detected_circles.jpg
+
+# OS-specific files
+.DS_Store

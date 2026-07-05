@@ -1,0 +1,254 @@
+{
+  "apartments": [
+    {
+      "apartment_number": "1",
+      "floor": "ראשונה",
+      "description": "דירה בת 4 חדרים, מ.ארונות, מ.א. מטבח שרותים ואמבטיה",
+      "area_sqm": 100.0,
+      "share_common": "392/1",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "ט",
+          "area_sqm": 12.5
+        }
+      ],
+      "color": "אדום",
+      "remarks": null
+    },
+    {
+      "apartment_number": "2",
+      "floor": "ראשונה",
+      "description": "דירה בת 3 חדרים, מטבח, פ.א. שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/2",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "ז",
+          "area_sqm": 11.25
+        }
+      ],
+      "color": "כחול",
+      "remarks": null
+    },
+    {
+      "apartment_number": "3",
+      "floor": "ראשונה",
+      "description": "דירה בת 3 חדרים, מטבח, פ.אוכל שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/3",
+      "attachments": [],
+      "color": "ירוק",
+      "remarks": null
+    },
+    {
+      "apartment_number": "4",
+      "floor": "ראשונה",
+      "description": "דירה בת 3 חדרים, מטבח, פ.א. שרותים ואמבטיה",
+      "area_sqm": 88.5,
+      "share_common": "392/4",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "ו",
+          "area_sqm": 12.5
+        }
+      ],
+      "color": "אפור",
+      "remarks": null
+    },
+    {
+      "apartment_number": "5",
+      "floor": "ראשונה",
+      "description": "דירה בת 3 חדרים + 1/2 חדר מטבח, ח.א. שרותים ואמבטיה",
+      "area_sqm": 90.0,
+      "share_common": "392/5",
+      "attachments": [],
+      "color": "כתום",
+      "remarks": null
+    },
+    {
+      "apartment_number": "6",
+      "floor": "ראשונה",
+      "description": "דירה בת 4 חדרים, מ.א. ארונות שרותים ואמבטיה",
+      "area_sqm": 100.0,
+      "share_common": "392/6",
+      "attachments": [],
+      "color": "חום",
+      "remarks": null
+    },
+    {
+      "apartment_number": "7",
+      "floor": "ראשונה",
+      "description": "דירה בת 4 חדרים, מ.ב. ח.ארונות שרותים ואמבטיה",
+      "area_sqm": 100.0,
+      "share_common": "392/7",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "ה",
+          "area_sqm": 11.5
+        }
+      ],
+      "color": "תכלת",
+      "remarks": null
+    },
+    {
+      "apartment_number": "8",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים, מטבח, פ.א. שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/8",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "ד",
+          "area_sqm": 11.5
+        }
+      ],
+      "color": "ירוק",
+      "remarks": null
+    },
+    {
+      "apartment_number": "9",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים, מטבח, פ.א. שרותים ואמבטיה",
+      "area_sqm": 83.5,
+      "share_common": "392/9",
+      "attachments": [],
+      "color": "שחור",
+      "remarks": null
+    },
+    {
+      "apartment_number": "10",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים + 1/2 חדר מטבח, פ.א. שרותים ואמבטיה",
+      "area_sqm": 88.5,
+      "share_common": "392/10",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "ח",
+          "area_sqm": 12.5
+        }
+      ],
+      "color": "סגול",
+      "remarks": null
+    },
+    {
+      "apartment_number": "11",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים + 1/2 חדר מטבח, ח.א. שרותים ואמבטיה",
+      "area_sqm": 90.0,
+      "share_common": "392/11",
+      "attachments": [],
+      "color": "צהוב",
+      "remarks": null
+    },
+    {
+      "apartment_number": "12",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים 2 מ.א. מטבח פ.א. שרותים ואמבטיה",
+      "area_sqm": 103.0,
+      "share_common": "392/12",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "א",
+          "area_sqm": 11.25
+        }
+      ],
+      "color": "אדום",
+      "remarks": null
+    },
+    {
+      "apartment_number": "13",
+      "floor": "שלישית",
+      "description": "דירה בת 2 חדרים, 3 מ.א. מטבח פ.א. שרותים ואמבטיה",
+      "area_sqm": 112.5,
+      "share_common": "392/13",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "ג",
+          "area_sqm": 12.5
+        },
+        {
+          "description": "גג",
+          "sign": "יב",
+          "area_sqm": 99.0
+        }
+      ],
+      "color": "בורדו",
+      "remarks": null
+    },
+    {
+      "apartment_number": "14",
+      "floor": "שלישית",
+      "description": "דירה בת 3 חדרים מטבח פ.אוכל שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/14",
+      "attachments": [],
+      "color": "כחול",
+      "remarks": null
+    },
+    {
+      "apartment_number": "15",
+      "floor": "שלישית",
+      "description": "דירה בת 3 חדרים, מטבח פ.אוכל שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/15",
+      "attachments": [],
+      "color": "ירוק",
+      "remarks": null
+    },
+    {
+      "apartment_number": "16",
+      "floor": "שלישית",
+      "description": "דירה בת 3 חדרים מטבח פ.אוכל שרותים ואמבטיה",
+      "area_sqm": 88.5,
+      "share_common": "392/16",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "א",
+          "area_sqm": 12.5
+        }
+      ],
+      "color": "כתום",
+      "remarks": null
+    },
+    {
+      "apartment_number": "17",
+      "floor": "שלישית",
+      "description": "דירה בת 3 חדרים + 1/2 חדר מטבח, פ.אוכל שרותים אמבטיה",
+      "area_sqm": 90.0,
+      "share_common": "392/17",
+      "attachments": [],
+      "color": "תכלת",
+      "remarks": null
+    },
+    {
+      "apartment_number": "18",
+      "floor": "שלישית",
+      "description": "דירה בת 4 חדרים, מטבח, פ.א. שרותים אמבטיה",
+      "area_sqm": 109.5,
+      "share_common": "392/18",
+      "attachments": [
+        {
+          "description": "חניה",
+          "sign": "ב",
+          "area_sqm": 12.5
+        },
+        {
+          "description": "גג",
+          "sign": "יא",
+          "area_sqm": 99.0
+        }
+      ],
+      "color": "סגול",
+      "remarks": null
+    }
+  ]
+}

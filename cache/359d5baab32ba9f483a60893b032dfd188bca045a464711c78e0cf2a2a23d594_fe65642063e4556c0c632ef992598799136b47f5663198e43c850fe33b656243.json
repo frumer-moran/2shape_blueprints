@@ -1,0 +1,148 @@
+{
+  "apartments": [
+    {
+      "apartment_number": "1",
+      "floor": "ראשונה",
+      "description": "דירה בת 4 חדרים, מ.ארונות, מ.ב. מטבח שרותים ואמבטיה",
+      "area_sqm": 100.0,
+      "share_common": "392/1",
+      "remarks": null
+    },
+    {
+      "apartment_number": "2",
+      "floor": "ראשונה",
+      "description": "דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/2",
+      "remarks": null
+    },
+    {
+      "apartment_number": "3",
+      "floor": "ראשונה",
+      "description": "דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/3",
+      "remarks": null
+    },
+    {
+      "apartment_number": "4",
+      "floor": "ראשונה",
+      "description": "דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 90.0,
+      "share_common": "392/4",
+      "remarks": null
+    },
+    {
+      "apartment_number": "5",
+      "floor": "ראשונה",
+      "description": "דירה בת 3 חדרים + 1/2 חדר, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 100.0,
+      "share_common": "392/5",
+      "remarks": null
+    },
+    {
+      "apartment_number": "6",
+      "floor": "ראשונה",
+      "description": "דירה בת 4 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/6",
+      "remarks": null
+    },
+    {
+      "apartment_number": "7",
+      "floor": "ראשונה",
+      "description": "דירה בת 4 חדרים, מטבח, מ.א. ארונות שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/7",
+      "remarks": null
+    },
+    {
+      "apartment_number": "8",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 83.5,
+      "share_common": "392/8",
+      "remarks": null
+    },
+    {
+      "apartment_number": "9",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 88.5,
+      "share_common": "392/9",
+      "remarks": null
+    },
+    {
+      "apartment_number": "10",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים + 1/2 חדר, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 103.0,
+      "share_common": "392/10",
+      "remarks": null
+    },
+    {
+      "apartment_number": "11",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים + 1/2 חדר, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 112.5,
+      "share_common": "392/11",
+      "remarks": null
+    },
+    {
+      "apartment_number": "12",
+      "floor": "שניה",
+      "description": "דירה בת 3 חדרים + 2 חצאי חדר, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/12",
+      "remarks": null
+    },
+    {
+      "apartment_number": "13",
+      "floor": "שלישית",
+      "description": "דירה בת 2 חדרים, 3 חצאי חדר, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 80.5,
+      "share_common": "392/13",
+      "remarks": null
+    },
+    {
+      "apartment_number": "14",
+      "floor": "שלישית",
+      "description": "דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 88.5,
+      "share_common": "392/14",
+      "remarks": null
+    },
+    {
+      "apartment_number": "15",
+      "floor": "שלישית",
+      "description": "דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 90.0,
+      "share_common": "392/15",
+      "remarks": null
+    },
+    {
+      "apartment_number": "16",
+      "floor": "שלישית",
+      "description": "דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 109.5,
+      "share_common": "392/16",
+      "remarks": null
+    },
+    {
+      "apartment_number": "17",
+      "floor": "שלישית",
+      "description": "דירה בת 3 חדרים + 1/2 חדר, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 109.5,
+      "share_common": "392/17",
+      "remarks": null
+    },
+    {
+      "apartment_number": "18",
+      "floor": "שלישית",
+      "description": "דירה בת 4 חדרים, מטבח, מ.א. שרותים ואמבטיה",
+      "area_sqm": 109.5,
+      "share_common": "392/18",
+      "remarks": null
+    }
+  ]
+}

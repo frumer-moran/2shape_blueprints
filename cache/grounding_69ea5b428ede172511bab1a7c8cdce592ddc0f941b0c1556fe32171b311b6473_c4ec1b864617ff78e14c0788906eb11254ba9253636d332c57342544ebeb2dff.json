@@ -1,0 +1,59 @@
+{
+  "apartments": [
+    {
+      "apartment_number": "1",
+      "label_box": [
+        478,
+        221,
+        501,
+        242
+      ],
+      "border_color": "אדום",
+      "remarks": "דירה 1 ממוקמת בקומה ראשונה."
+    },
+    {
+      "apartment_number": "2",
+      "label_box": [
+        535,
+        317,
+        556,
+        336
+      ],
+      "border_color": "כחול",
+      "remarks": "דירה 2 ממוקמת בקומה ראשונה."
+    },
+    {
+      "apartment_number": "3",
+      "label_box": [
+        543,
+        577,
+        564,
+        596
+      ],
+      "border_color": "ירוק",
+      "remarks": "דירה 3 ממוקמת בקומה ראשונה."
+    },
+    {
+      "apartment_number": "4",
+      "label_box": [
+        455,
+        680,
+        478,
+        700
+      ],
+      "border_color": "אפור",
+      "remarks": "דירה 4 ממוקמת בקומה ראשונה."
+    },
+    {
+      "apartment_number": "5",
+      "label_box": [
+        606,
+        678,
+        627,
+        697
+      ],
+      "border_color": "כתום",
+      "remarks": "דירה 5 ממוקמת בקומה ראשונה."
+    }
+  ]
+}

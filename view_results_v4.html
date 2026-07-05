@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="he" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מבט על נתוני תשריט - אוסטרובסקי 31</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        body {
+            font-family: 'Assistant', sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Hide scrollbars but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        #viewer-container, #pan-zoom-content, .grounding-box {
+            direction: ltr !important;
+            text-align: left !important;
+        }
+        #pan-zoom-content {
+            left: 0px !important;
+            right: auto !important;
+            transform-origin: top left !important;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col overflow-hidden" dir="ltr">
+
+    <!-- Top Header -->
+    <header class="h-14 border-b border-zinc-900 bg-zinc-950 flex items-center justify-between px-6 z-10" dir="rtl">
+        <div class="flex items-center gap-3">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h1 class="text-lg font-bold tracking-tight">בודק תשריט בית משותף - אוסטרובסקי 31, רעננה</h1>
+        </div>
+        <div class="text-zinc-500 text-xs font-mono">גוש 6583 / חלקה 392</div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex overflow-hidden" style="height: calc(100vh - 3.5rem);">
+        
+        <!-- Left: Image Viewer (with Pan & Zoom) -->
+        <div class="w-1/2 h-full border-l border-zinc-900 relative bg-zinc-900 overflow-hidden select-none" id="viewer-container" dir="ltr">
+            <!-- Canvas Selector Buttons -->
+            <div class="absolute top-4 left-4 z-20 flex gap-2">
+                <button onclick="setImage('table_slice.jpg')" id="btn-table" class="px-3 py-1.5 rounded bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 border border-zinc-800 text-xs shadow-lg transition-all font-semibold">טבלת שטחים (OCR)</button>
+                <button onclick="setImage('stitched_first_floor_v2.jpg')" id="btn-stitch" class="px-3 py-1.5 rounded bg-emerald-600 text-zinc-100 border border-emerald-500 text-xs shadow-lg transition-all font-semibold">תוכנית קומה ראשונה (Stitched)</button>
+            </div>
+
+            <!-- Zoom controls -->
+            <div class="absolute top-4 right-4 z-20 flex gap-2">
+                <button onclick="zoomIn()" class="p-2 rounded bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 border border-zinc-800 text-sm font-bold shadow-lg transition-colors">+</button>
+                <button onclick="zoomOut()" class="p-2 rounded bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 border border-zinc-800 text-sm font-bold shadow-lg transition-colors">-</button>
+                <button onclick="resetZoom()" class="px-3 py-2 rounded bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 border border-zinc-800 text-xs shadow-lg transition-colors">איפוס</button>
+            </div>
+            
+            <div class="absolute bottom-4 right-4 z-20 bg-black/60 px-3 py-1.5 rounded text-[11px] text-zinc-400">
+                הנחיה: גרור את התמונה כדי להזיז, והשתמש בגלגלת העכבר כדי לזום. תיבות צבעוניות מסמנות מיקומי דירות.
+            </div>
+
+            <!-- Draggable & Zoomable Wrapper -->
+            <div id="pan-zoom-content" class="absolute top-0 left-0 cursor-grab active:cursor-grabbing transition-transform duration-75 ease-out origin-top-left will-change-transform" style="transform: translate3d(0px, 0px, 0px) scale(0.45);">
+                <img src="about:blank" alt="תשריט מקורי" class="pointer-events-none" style="max-width: none;" />
+            </div>
+        </div>
+
+        <!-- Right: JSON Table -->
+        <div class="w-1/2 flex flex-col h-full bg-zinc-950 overflow-y-auto" dir="rtl">
+            <div class="p-6 border-b border-zinc-900 bg-zinc-950 sticky top-0 backdrop-blur z-10 flex justify-between items-center">
+                <div>
+                    <h2 class="text-base font-semibold text-zinc-200">נתוני טבלת השטחים (מתוך קובץ ה-JSON)</h2>
+                    <p class="text-xs text-zinc-500 mt-1">מצג ויזואלי של פלט ה-OCR מול קובץ התמונה לביצוע אימות אנושי</p>
+                </div>
+                <div class="text-xs px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
+                    סה"כ דירות: 18
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="p-6">
+                <table class="w-full text-right border-collapse">
+                    <thead>
+                        <tr class="border-b border-zinc-800 text-zinc-400 text-xs font-semibold uppercase tracking-wider bg-zinc-900/30">
+                            <th class="px-4 py-3 rounded-r">מס' דירה</th>
+                            <th class="px-4 py-3">קומה</th>
+                            <th class="px-4 py-3">תיאור</th>
+                            <th class="px-4 py-3">שטח דירה</th>
+                            <th class="px-4 py-3">חלק ברכוש</th>
+                            <th class="px-4 py-3">הצמדות</th>
+                            <th class="px-4 py-3">צבע יחידה</th>
+                            <th class="px-4 py-3 rounded-l">הערות</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-900">
+                        
+        <tr id="apt-row-1" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('1')" onmouseleave="clearGroundingBoxHighlight('1')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #ef4444; box-shadow: 0 0 6px #ef444440;"></span>
+            <span>1</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">ראשונה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 4 חדרים, מ.ארונות, מ.ב. מטבח שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">100.0 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/1</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-red-500/10 text-red-300 border-red-500/30 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(ט)</span>
+                <span class="ml-auto font-mono">12.5 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #ef4444d0;">
+                <div class="flex items-center gap-1">
+                    <span>אדום</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-2" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('2')" onmouseleave="clearGroundingBoxHighlight('2')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #3b82f6; box-shadow: 0 0 6px #3b82f640;"></span>
+            <span>2</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">ראשונה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">80.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/2</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-blue-500/10 text-blue-300 border-blue-500/30 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(ז)</span>
+                <span class="ml-auto font-mono">11.25 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #3b82f6d0;">
+                <div class="flex items-center gap-1">
+                    <span>כחול</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-3" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('3')" onmouseleave="clearGroundingBoxHighlight('3')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #22c55e; box-shadow: 0 0 6px #22c55e40;"></span>
+            <span>3</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">ראשונה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, מטבח, פ.אוכל שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">80.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/3</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #22c55ed0;">
+                <div class="flex items-center gap-1">
+                    <span>ירוק</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-4" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('4')" onmouseleave="clearGroundingBoxHighlight('4')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #6b7280; box-shadow: 0 0 6px #6b728040;"></span>
+            <span>4</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">ראשונה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">88.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/4</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-gray-500/10 text-gray-300 border-gray-500/30 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(ו)</span>
+                <span class="ml-auto font-mono">12.5 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #6b7280d0;">
+                <div class="flex items-center gap-1">
+                    <span>אפור</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-5" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('5')" onmouseleave="clearGroundingBoxHighlight('5')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #f97316; box-shadow: 0 0 6px #f9731640;"></span>
+            <span>5</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">ראשונה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים + 1/2 חד׳, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">90.0 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/5</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #f97316d0;">
+                <div class="flex items-center gap-1">
+                    <span>כתום</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-6" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('6')" onmouseleave="clearGroundingBoxHighlight('6')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #78350f; box-shadow: 0 0 6px #78350f40;"></span>
+            <span>6</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">ראשונה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 4 חדרים, מ.א. ארונות שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">100.0 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/6</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #78350fd0;">
+                <div class="flex items-center gap-1">
+                    <span>חום</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-7" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('7')" onmouseleave="clearGroundingBoxHighlight('7')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #06b6d4; box-shadow: 0 0 6px #06b6d440;"></span>
+            <span>7</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">ראשונה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 4 חדרים, מטבח, מ.א. ארונות שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">100.0 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/7</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-cyan-500/10 text-cyan-300 border-cyan-500/30 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(ה)</span>
+                <span class="ml-auto font-mono">11.5 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #06b6d4d0;">
+                <div class="flex items-center gap-1">
+                    <span>תכלת</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-8" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('8')" onmouseleave="clearGroundingBoxHighlight('8')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #84cc16; box-shadow: 0 0 6px #84cc1640;"></span>
+            <span>8</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שניה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">80.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/8</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #84cc16d0;">
+                <div class="flex items-center gap-1">
+                    <span>ירקרק</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-9" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('9')" onmouseleave="clearGroundingBoxHighlight('9')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #27272a; box-shadow: 0 0 6px #27272a40;"></span>
+            <span>9</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שניה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, מטבח, פ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">83.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/9</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #27272ad0;">
+                <div class="flex items-center gap-1">
+                    <span>שחור</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-10" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('10')" onmouseleave="clearGroundingBoxHighlight('10')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #a855f7; box-shadow: 0 0 6px #a855f740;"></span>
+            <span>10</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שניה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים + 1/2 חד׳, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">88.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/10</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-purple-500/10 text-purple-300 border-purple-500/30 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(ח)</span>
+                <span class="ml-auto font-mono">12.5 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #a855f7d0;">
+                <div class="flex items-center gap-1">
+                    <span>סגול</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-11" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('11')" onmouseleave="clearGroundingBoxHighlight('11')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #eab308; box-shadow: 0 0 6px #eab30840;"></span>
+            <span>11</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שניה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים + 1/2 חד׳, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">90.0 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/11</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #eab308d0;">
+                <div class="flex items-center gap-1">
+                    <span>צהוב</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-12" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('12')" onmouseleave="clearGroundingBoxHighlight('12')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #ef4444; box-shadow: 0 0 6px #ef444440;"></span>
+            <span>12</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שניה</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, 2 חצאי חד׳, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">103.0 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/12</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-red-500/10 text-red-300 border-red-500/30 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(א)</span>
+                <span class="ml-auto font-mono">11.25 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #ef4444d0;">
+                <div class="flex items-center gap-1">
+                    <span>אדום</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-13" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('13')" onmouseleave="clearGroundingBoxHighlight('13')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #991b1b; box-shadow: 0 0 6px #991b1b40;"></span>
+            <span>13</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שלישית</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 2 חדרים, 3 חצאי חד׳, מטבח, ח.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">112.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/13</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-rose-950/30 text-rose-300 border-rose-800/40 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(ג)</span>
+                <span class="ml-auto font-mono">12.5 מ"ר</span>
+            </div>
+            
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-rose-950/30 text-rose-300 border-rose-800/40 text-xs">
+                <span class="font-bold">גג</span>
+                <span class="opacity-75 font-mono">(י)</span>
+                <span class="ml-auto font-mono">99.0 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #991b1bd0;">
+                <div class="flex items-center gap-1">
+                    <span>בורדו</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-14" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('14')" onmouseleave="clearGroundingBoxHighlight('14')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #3b82f6; box-shadow: 0 0 6px #3b82f640;"></span>
+            <span>14</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שלישית</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, מטבח, פ.אוכל שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">80.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/14</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #3b82f6d0;">
+                <div class="flex items-center gap-1">
+                    <span>כחול</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-15" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('15')" onmouseleave="clearGroundingBoxHighlight('15')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #22c55e; box-shadow: 0 0 6px #22c55e40;"></span>
+            <span>15</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שלישית</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, מטבח, פ.אוכל שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">80.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/15</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #22c55ed0;">
+                <div class="flex items-center gap-1">
+                    <span>ירוק</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-16" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('16')" onmouseleave="clearGroundingBoxHighlight('16')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #f97316; box-shadow: 0 0 6px #f9731640;"></span>
+            <span>16</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שלישית</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">88.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/16</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-orange-500/10 text-orange-300 border-orange-500/30 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(א)</span>
+                <span class="ml-auto font-mono">12.5 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #f97316d0;">
+                <div class="flex items-center gap-1">
+                    <span>כתום</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-17" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('17')" onmouseleave="clearGroundingBoxHighlight('17')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #06b6d4; box-shadow: 0 0 6px #06b6d440;"></span>
+            <span>17</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שלישית</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 3 חדרים + 1/2 חד׳, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">90.0 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/17</td>
+            <td class="px-4 py-3"><span class="text-zinc-700 text-xs">-</span></td>
+            <td class="px-4 py-3 text-xs" style="color: #06b6d4d0;">
+                <div class="flex items-center gap-1">
+                    <span>תכלת</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+        <tr id="apt-row-18" class="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors" onmouseenter="highlightGroundingBox('18')" onmouseleave="clearGroundingBoxHighlight('18')">
+            <td class="px-4 py-3 font-mono text-zinc-100 font-bold">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full border border-zinc-700/80 shadow-sm" style="background-color: #a855f7; box-shadow: 0 0 6px #a855f740;"></span>
+            <span>18</span>
+        </div>
+        </td>
+            <td class="px-4 py-3 text-zinc-300 text-sm">שלישית</td>
+            <td class="px-4 py-3 text-zinc-300 text-sm max-w-xs">דירה בת 4 חדרים, מטבח, מ.א. שרותים ואמבטיה</td>
+            <td class="px-4 py-3 font-mono text-emerald-400 font-semibold">109.5 מ"ר</td>
+            <td class="px-4 py-3 font-mono text-zinc-400 text-sm">392/18</td>
+            <td class="px-4 py-3">
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-purple-500/10 text-purple-300 border-purple-500/30 text-xs">
+                <span class="font-bold">חניה</span>
+                <span class="opacity-75 font-mono">(ב)</span>
+                <span class="ml-auto font-mono">12.5 מ"ר</span>
+            </div>
+            
+            <div class="flex items-center gap-2 mb-1.5 p-1.5 rounded border bg-purple-500/10 text-purple-300 border-purple-500/30 text-xs">
+                <span class="font-bold">גג</span>
+                <span class="opacity-75 font-mono">(יא)</span>
+                <span class="ml-auto font-mono">99.0 מ"ר</span>
+            </div>
+            </td>
+            <td class="px-4 py-3 text-xs" style="color: #a855f7d0;">
+                <div class="flex items-center gap-1">
+                    <span>סגול</span>
+                    
+                </div>
+            </td>
+            <td class="px-4 py-3 text-zinc-500 text-xs">-</td>
+        </tr>
+        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Drag & Zoom Script -->
+    <script>
+        const container = document.getElementById('viewer-container');
+        const content = document.getElementById('pan-zoom-content');
+        const imgEl = content.querySelector('img');
+        const btnTable = document.getElementById('btn-table');
+        const btnStitch = document.getElementById('btn-stitch');
+        
+        // Grounding data injected from Python cache
+        const groundingData = [{"apartment_number": "1", "label_box": [478, 221, 501, 242], "border_color": "אדום", "remarks": "דירה 1 ממוקמת בקומה ראשונה."}, {"apartment_number": "2", "label_box": [535, 317, 556, 336], "border_color": "כחול", "remarks": "דירה 2 ממוקמת בקומה ראשונה."}, {"apartment_number": "3", "label_box": [543, 577, 564, 596], "border_color": "ירוק", "remarks": "דירה 3 ממוקמת בקומה ראשונה."}, {"apartment_number": "4", "label_box": [455, 680, 478, 700], "border_color": "אפור", "remarks": "דירה 4 ממוקמת בקומה ראשונה."}, {"apartment_number": "5", "label_box": [606, 678, 627, 697], "border_color": "כתום", "remarks": "דירה 5 ממוקמת בקומה ראשונה."}];
+        
+        let scale = 0.45;
+        let pointX = 0;
+        let pointY = 0;
+        let start = { x: 0, y: 0 };
+        let isDragging = false;
+
+        const colorMap = {
+            "אדום": "#ef4444",
+            "כחול": "#3b82f6",
+            "ירוק": "#22c55e",
+            "ירקרק": "#84cc16",
+            "אפור": "#6b7280",
+            "תכלת": "#06b6d4",
+            "צהוב": "#eab308",
+            "שחור": "#27272a",
+            "סגול": "#a855f7",
+            "בורדו": "#991b1b",
+            "כתום": "#f97316",
+            "חום": "#78350f"
+        };
+        
+        function getHexColor(hebrew_color) {
+            return colorMap[hebrew_color] || "#71717a";
+        }
+
+        function setTransform() {
+            content.style.transform = `translate3d(${pointX}px, ${pointY}px, 0px) scale(${scale})`;
+        }
+
+        // Render visual overlays for grounded units
+        function renderGroundingBoxes() {
+            // Remove existing boxes
+            const existing = content.querySelectorAll('.grounding-box');
+            existing.forEach(el => el.remove());
+            
+            // Only draw boxes on the stitched floor plan
+            if (imgEl.src.includes('table_slice.jpg')) return;
+            
+            groundingData.forEach(apt => {
+                const [ymin, xmin, ymax, xmax] = apt.label_box;
+                
+                // Convert 0-1000 coordinate values to percentages
+                const top = ymin / 10;
+                const left = xmin / 10;
+                const width = (xmax - xmin) / 10;
+                const height = (ymax - ymin) / 10;
+                
+                const box = document.createElement('div');
+                box.id = `grounding-box-${apt.apartment_number}`;
+                box.className = 'grounding-box absolute border-2 rounded transition-all duration-150 hover:scale-110 hover:z-30 cursor-pointer flex items-center justify-center';
+                
+                const colorHex = getHexColor(apt.border_color);
+                box.style.top = `${top}%`;
+                box.style.left = `${left}%`;
+                box.style.width = `${width}%`;
+                box.style.height = `${height}%`;
+                box.style.borderColor = colorHex;
+                box.style.backgroundColor = `${colorHex}15`; // ~8% opacity fill
+                box.style.boxShadow = `0 0 8px ${colorHex}30`;
+                
+                // Add a text label inside
+                box.innerHTML = `<span class="bg-black/90 text-white text-[8px] font-bold px-1 rounded border border-zinc-700/80 pointer-events-none">${apt.apartment_number}</span>`;
+                
+                // Link hover behaviors (box -> table row)
+                box.addEventListener('mouseenter', () => {
+                    const row = document.getElementById(`apt-row-${apt.apartment_number}`);
+                    if (row) {
+                        row.classList.add('bg-zinc-800/80');
+                        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+                
+                box.addEventListener('mouseleave', () => {
+                    const row = document.getElementById(`apt-row-${apt.apartment_number}`);
+                    if (row) {
+                        row.classList.remove('bg-zinc-800/80');
+                    }
+                });
+                
+                content.appendChild(box);
+            });
+        }
+
+        // Link hover behaviors (table row -> box)
+        window.highlightGroundingBox = function(apt_num) {
+            const box = document.getElementById(`grounding-box-${apt_num}`);
+            if (box) {
+                const colorHex = getHexColor(groundingData.find(a => a.apartment_number === apt_num)?.border_color || "");
+                box.style.transform = 'scale(1.15)';
+                box.style.boxShadow = `0 0 16px ${colorHex}d0`;
+                box.style.borderWidth = '3px';
+                box.style.zIndex = '30';
+            }
+        };
+
+        window.clearGroundingBoxHighlight = function(apt_num) {
+            const box = document.getElementById(`grounding-box-${apt_num}`);
+            if (box) {
+                const colorHex = getHexColor(groundingData.find(a => a.apartment_number === apt_num)?.border_color || "");
+                box.style.transform = 'none';
+                box.style.boxShadow = `0 0 8px ${colorHex}30`;
+                box.style.borderWidth = '2px';
+                box.style.zIndex = 'auto';
+            }
+        };
+
+        // Dynamic Fitting & Centering on Image Load
+        imgEl.onload = function() {
+            let containerWidth = container.clientWidth;
+            let containerHeight = container.clientHeight;
+            
+            // Fallback to window dimensions if browser rendering is delayed
+            if (!containerWidth || containerWidth < 50) containerWidth = window.innerWidth / 2;
+            if (!containerHeight || containerHeight < 50) containerHeight = window.innerHeight - 56;
+            
+            const imgWidth = imgEl.naturalWidth;
+            const imgHeight = imgEl.naturalHeight;
+            
+            if (!imgWidth || !imgHeight) return;
+            
+            // Explicitly set the width and height of the wrapper to match the image
+            content.style.width = imgWidth + 'px';
+            content.style.height = imgHeight + 'px';
+            
+            // Calculate perfect fit scale (with 5% padding)
+            const scaleX = containerWidth / imgWidth;
+            const scaleY = containerHeight / imgHeight;
+            scale = Math.min(scaleX, scaleY) * 0.95;
+            
+            // Center the image inside the container
+            pointX = (containerWidth - imgWidth * scale) / 2;
+            pointY = (containerHeight - imgHeight * scale) / 2;
+            
+            setTransform();
+            
+            // Draw grounding overlay boxes
+            renderGroundingBoxes();
+            
+            console.log('Image fitted successfully:', imgEl.src);
+            console.log('Fitted dimensions:', imgWidth, 'x', imgHeight, 'Scale:', scale);
+        };
+
+        // Set the initial image source dynamically with a unique timestamp to force browser cache bypass on page refresh
+        imgEl.src = "stitched_first_floor_v2.jpg?t=" + new Date().getTime();
+
+        function setImage(src) {
+            console.log('setImage called with:', src);
+            if (imgEl) {
+                // Add timestamp query parameter to bust browser caches
+                imgEl.src = src + '?t=' + new Date().getTime();
+            }
+            if (src === 'table_slice.jpg') {
+                btnTable.className = 'px-3 py-1.5 rounded bg-emerald-600 text-zinc-100 border border-emerald-500 text-xs shadow-lg transition-all font-semibold';
+                btnStitch.className = 'px-3 py-1.5 rounded bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 border border-zinc-800 text-xs shadow-lg transition-all font-semibold';
+            } else {
+                btnTable.className = 'px-3 py-1.5 rounded bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 border border-zinc-800 text-xs shadow-lg transition-all font-semibold';
+                btnStitch.className = 'px-3 py-1.5 rounded bg-emerald-600 text-zinc-100 border border-emerald-500 text-xs shadow-lg transition-all font-semibold';
+            }
+        }
+
+        container.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            start = { x: e.clientX - pointX, y: e.clientY - pointY };
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            pointX = e.clientX - start.x;
+            pointY = e.clientY - start.y;
+            setTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const xs = (e.clientX - container.getBoundingClientRect().left - pointX) / scale;
+            const ys = (e.clientY - container.getBoundingClientRect().top - pointY) / scale;
+            const delta = -e.deltaY;
+            
+            // Smooth zoom steps: 6% per notch
+            if (delta > 0) {
+                scale *= 1.06;
+            } else {
+                scale /= 1.06;
+            }
+            
+            // Zoom bounds
+            scale = Math.min(Math.max(0.01, scale), 6);
+            
+            pointX = e.clientX - container.getBoundingClientRect().left - xs * scale;
+            pointY = e.clientY - container.getBoundingClientRect().top - ys * scale;
+            
+            setTransform();
+        });
+
+        function zoomIn() {
+            scale *= 1.15; // smooth 15% manual zoom steps
+            scale = Math.min(scale, 6);
+            // Zoom centered on container midpoint
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const centerX = containerWidth / 2;
+            const centerY = containerHeight / 2;
+            const xs = (centerX - pointX) / (scale / 1.15);
+            const ys = (centerY - pointY) / (scale / 1.15);
+            pointX = centerX - xs * scale;
+            pointY = centerY - ys * scale;
+            setTransform();
+        }
+
+        function zoomOut() {
+            scale /= 1.15;
+            scale = Math.max(0.01, scale);
+            // Zoom centered on container midpoint
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const centerX = containerWidth / 2;
+            const centerY = containerHeight / 2;
+            const xs = (centerX - pointX) / (scale * 1.15);
+            const ys = (centerY - pointY) / (scale * 1.15);
+            pointX = centerX - xs * scale;
+            pointY = centerY - ys * scale;
+            setTransform();
+        }
+
+        function resetZoom() {
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const imgWidth = imgEl.naturalWidth;
+            const imgHeight = imgEl.naturalHeight;
+            
+            if (!imgWidth || !imgHeight) return;
+            
+            const scaleX = containerWidth / imgWidth;
+            const scaleY = containerHeight / imgHeight;
+            scale = Math.min(scaleX, scaleY) * 0.95;
+            
+            pointX = (containerWidth - imgWidth * scale) / 2;
+            pointY = (containerHeight - imgHeight * scale) / 2;
+            
+            setTransform();
+        }
+    </script>
+    <!-- Live Debug Panel for Layout Diagnostics -->
+    <div id="debug-panel" class="fixed bottom-4 left-4 z-50 bg-black/90 border border-zinc-800 rounded p-4 text-[11px] font-mono text-zinc-400 max-w-sm shadow-2xl flex flex-col gap-1.5 pointer-events-auto">
+        <div class="font-bold text-zinc-200 border-b border-zinc-800 pb-1 flex justify-between">
+            <span>מחוון דיאגנוסטיקה (Debug)</span>
+            <button onclick="updateDebugMetrics()" class="text-emerald-400 hover:text-emerald-300 font-bold">רענן ↻</button>
+        </div>
+        <div>מספר דירות בטבלה: <span id="dbg-rows" class="text-zinc-200">-</span></div>
+        <div>גודל תמונה מקורי: <span id="dbg-img-size" class="text-zinc-200">-</span></div>
+        <div>גודל מעטפת (#pan-zoom-content): <span id="dbg-wrapper-size" class="text-zinc-200">-</span></div>
+        <div>גודל מיכל (#viewer-container): <span id="dbg-container-size" class="text-zinc-200">-</span></div>
+        <div class="border-t border-zinc-900 pt-1.5 mt-0.5">
+            <div class="font-semibold text-zinc-300 mb-1">נתוני תיבות אינטראקטיביות (DOM):</div>
+            <div id="dbg-boxes-list" class="max-h-36 overflow-y-auto flex flex-col gap-1 pr-1 select-text">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDebugMetrics() {
+            const dbgRows = document.getElementById('dbg-rows');
+            const dbgImgSize = document.getElementById('dbg-img-size');
+            const dbgWrapperSize = document.getElementById('dbg-wrapper-size');
+            const dbgContainerSize = document.getElementById('dbg-container-size');
+            const dbgBoxesList = document.getElementById('dbg-boxes-list');
+            
+            if (dbgRows) dbgRows.textContent = document.querySelectorAll('tbody tr').length;
+            if (dbgImgSize) dbgImgSize.textContent = `${imgEl.naturalWidth}x${imgEl.naturalHeight} (src: ${imgEl.src.split('/').pop().split('?')[0]})`;
+            if (dbgWrapperSize) dbgWrapperSize.textContent = `${content.offsetWidth}x${content.offsetHeight} (dir: ${getComputedStyle(content).direction})`;
+            if (dbgContainerSize) dbgContainerSize.textContent = `${container.clientWidth}x${container.clientHeight} (dir: ${getComputedStyle(container).direction})`;
+            
+            if (dbgBoxesList) {
+                dbgBoxesList.innerHTML = '';
+                const boxes = document.querySelectorAll('.grounding-box');
+                if (boxes.length === 0) {
+                    dbgBoxesList.innerHTML = '<span class="text-zinc-600">- אין תיבות ב-DOM -</span>';
+                }
+                boxes.forEach(box => {
+                    const aptNum = box.id.split('-').pop();
+                    const leftPct = box.style.left;
+                    const topPct = box.style.top;
+                    const widthPct = box.style.width;
+                    const heightPct = box.style.height;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'border-b border-zinc-900 pb-1';
+                    item.innerHTML = `
+                        <span class="font-bold text-zinc-300">דירה ${aptNum}</span>: 
+                        left:${leftPct}, top:${topPct}, w:${widthPct}, h:${heightPct} 
+                        <br/>
+                        <span class="text-zinc-500">פיקסלים (DOM): left:${box.offsetLeft}px, top:${box.offsetTop}px, w:${box.offsetWidth}px, h:${box.offsetHeight}px</span>
+                    `;
+                    dbgBoxesList.appendChild(item);
+                });
+            }
+        }
+        
+        // Run update after rendering
+        const oldRender = renderGroundingBoxes;
+        renderGroundingBoxes = function() {
+            oldRender();
+            setTimeout(updateDebugMetrics, 100);
+        };
+    </script>
+</body>
+</html>

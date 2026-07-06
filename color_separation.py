@@ -31,8 +31,8 @@ def main():
     # ----------------------------------------
     # 2. Blue Mask (Unit 2) - Low saturation threshold due to orange paper background neutralizing blue ink
     # ----------------------------------------
-    lower_blue = np.array([100, 20, 40])
-    upper_blue = np.array([135, 255, 255])
+    lower_blue = np.array([80, 15, 30])
+    upper_blue = np.array([150, 255, 255])
     mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
     
     # ----------------------------------------

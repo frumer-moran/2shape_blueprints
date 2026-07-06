@@ -4,27 +4,30 @@ import glob
 import os
 
 def main():
-    # Load original stitched image
+    # Load original stitched image or fallback to already cropped version
     img = cv2.imread("stitched_first_floor.png")
-    if img is None:
-        print("Error: stitched_first_floor.png not found.")
-        return
+    if img is not None:
+        h_orig, w_orig = img.shape[:2]
+        print(f"Original stitched shape: {w_orig}x{h_orig}")
         
-    h_orig, w_orig = img.shape[:2]
-    print(f"Original stitched shape: {w_orig}x{h_orig}")
-    
-    # Crop horizontally between the two inner white dots
-    x_start = 1976
-    x_end = 5796
-    crop = img[:, x_start:x_end]
-    
-    # Save as stitched_first_floor.jpg
-    cv2.imwrite("stitched_first_floor.jpg", crop)
-    print("Saved stitched_first_floor.jpg")
-    
+        # Crop horizontally between the two inner white dots
+        x_start = 1976
+        x_end = 5796
+        crop = img[:, x_start:x_end]
+        
+        # Save as stitched_first_floor.jpg
+        cv2.imwrite("stitched_first_floor.jpg", crop)
+        print("Saved stitched_first_floor.jpg")
+    else:
+        print("stitched_first_floor.png not found, loading stitched_first_floor.jpg directly...")
+        crop = cv2.imread("stitched_first_floor.jpg")
+        if crop is None:
+            print("Error: neither stitched_first_floor.png nor stitched_first_floor.jpg found.")
+            return
+            
     # Crop dimensions
     h_c, w_c = crop.shape[:2]
-    print(f"Cropped canvas size: {w_c}x{h_c}")
+    print(f"Canvas size: {w_c}x{h_c}")
     
     # Set coordinates in cropped pixels: (unit_number, x_center, y_center, radius, border_color)
     unit_coords = {
@@ -32,7 +35,8 @@ def main():
         "2": (1250, 1890, 36, "כחול"),
         "3": (2242, 1920, 36, "ירוק"),
         "4": (2638, 1618, 39, "אפור"),
-        "5": (2628, 2136, 36, "כתום")
+        "5": (2628, 2136, 36, "כתום"),
+        "6": (886, 2072, 40, "חום")
     }
     
     mapped_apts = []

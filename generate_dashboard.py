@@ -185,7 +185,7 @@ def main():
             <!-- Canvas Selector Buttons -->
             <div class="absolute top-4 left-4 z-20 flex gap-2">
                 <button onclick="setImage('table_slice.jpg')" id="btn-table" class="px-3 py-1.5 rounded bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 border border-zinc-800 text-xs shadow-lg transition-all font-semibold">טבלת שטחים (OCR)</button>
-                <button onclick="setImage('stitched_first_floor_v2.jpg')" id="btn-stitch" class="px-3 py-1.5 rounded bg-emerald-600 text-zinc-100 border border-emerald-500 text-xs shadow-lg transition-all font-semibold">תוכנית קומה ראשונה (Stitched)</button>
+                <button onclick="setImage('stitched_first_floor.jpg')" id="btn-stitch" class="px-3 py-1.5 rounded bg-emerald-600 text-zinc-100 border border-emerald-500 text-xs shadow-lg transition-all font-semibold">תוכנית קומה ראשונה (Stitched)</button>
             </div>
 
             <!-- Zoom controls -->
@@ -394,7 +394,7 @@ def main():
         }};
 
         // Set the initial image source dynamically with a unique timestamp to force browser cache bypass on page refresh
-        imgEl.src = "stitched_first_floor_v2.jpg?t=" + new Date().getTime();
+        imgEl.src = "stitched_first_floor.jpg?t=" + new Date().getTime();
 
         function setImage(src) {{
             console.log('setImage called with:', src);
@@ -566,7 +566,7 @@ def main():
 </html>
 """
     
-    output_html_path = "view_results_v4.html"
+    output_html_path = "view_results.html"
     with open(output_html_path, "w") as f:
         f.write(html_template)
     print(f"Successfully generated visual dashboard at: {output_html_path}")

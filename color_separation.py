@@ -44,41 +44,45 @@ def main():
     mask_b_lw[800:2600, 300:1500] = mask_blue[800:2600, 300:1500]
     
     # ----------------------------------------
+    # ----------------------------------------
     # Detect lines using Probabilistic Hough Transform
     # ----------------------------------------
-    lines_r = cv2.HoughLinesP(mask_r_lw, rho=1, theta=np.pi/180, threshold=20, minLineLength=25, maxLineGap=40)
-    lines_b = cv2.HoughLinesP(mask_b_lw, rho=1, theta=np.pi/180, threshold=20, minLineLength=25, maxLineGap=40)
+    lines_u1 = cv2.HoughLinesP(mask_r_lw, rho=1, theta=np.pi/180, threshold=20, minLineLength=25, maxLineGap=40)
+    lines_u2 = cv2.HoughLinesP(mask_b_lw, rho=1, theta=np.pi/180, threshold=20, minLineLength=25, maxLineGap=40)
     
     # ----------------------------------------
-    # Save isolated masks
-    # ----------------------------------------
-    os.makedirs("cache/color_masks", exist_ok=True)
-    cv2.imwrite("cache/color_masks/mask_red.jpg", mask_r_lw)
-    cv2.imwrite("cache/color_masks/mask_blue.jpg", mask_b_lw)
-    print("Saved color masks to cache/color_masks/")
-    
-    # ----------------------------------------
-    # Draw lines over grayscale blueprint for validation
+    # Draw Unit 1 lines over grayscale blueprint
     # ----------------------------------------
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    verify_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    img_u1 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
     
-    if lines_r is not None:
-        print(f"Detected {len(lines_r)} red line segments.")
-        for line in lines_r:
+    if lines_u1 is not None:
+        print(f"Detected {len(lines_u1)} red line segments for Unit 1.")
+        for line in lines_u1:
             x1, y1, x2, y2 = line.ravel()
-            cv2.line(verify_img, (x1, y1), (x2, y2), (0, 0, 255), 4) # Red lines
+            cv2.line(img_u1, (x1, y1), (x2, y2), (0, 0, 255), 4) # Red lines
             
-    if lines_b is not None:
-        print(f"Detected {len(lines_b)} blue line segments.")
-        for line in lines_b:
+    # ----------------------------------------
+    # Draw Unit 2 lines over grayscale blueprint
+    # ----------------------------------------
+    img_u2 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    
+    if lines_u2 is not None:
+        print(f"Detected {len(lines_u2)} blue line segments for Unit 2.")
+        for line in lines_u2:
             x1, y1, x2, y2 = line.ravel()
-            cv2.line(verify_img, (x1, y1), (x2, y2), (255, 0, 0), 4) # Blue lines
+            cv2.line(img_u2, (x1, y1), (x2, y2), (255, 0, 0), 4) # Blue lines
             
-    cv2.imwrite("cache/color_masks/verify_walls.jpg", verify_img)
-    small_verify = cv2.resize(verify_img, (1600, int(1600 * verify_img.shape[0] / verify_img.shape[1])))
-    cv2.imwrite("cache/color_masks/verify_walls_small.jpg", small_verify)
-    print("Saved verify_walls_small.jpg to cache/color_masks/")
+    # Save verification outputs
+    os.makedirs("cache/color_masks", exist_ok=True)
+    cv2.imwrite("cache/color_masks/verify_unit_1.jpg", img_u1)
+    cv2.imwrite("cache/color_masks/verify_unit_2.jpg", img_u2)
+    
+    small_u1 = cv2.resize(img_u1, (1600, int(1600 * img_u1.shape[0] / img_u1.shape[1])))
+    small_u2 = cv2.resize(img_u2, (1600, int(1600 * img_u2.shape[0] / img_u2.shape[1])))
+    cv2.imwrite("cache/color_masks/verify_unit_1_small.jpg", small_u1)
+    cv2.imwrite("cache/color_masks/verify_unit_2_small.jpg", small_u2)
+    print("Saved verify_unit_1_small.jpg and verify_unit_2_small.jpg to cache/color_masks/")
 
 if __name__ == "__main__":
     main()

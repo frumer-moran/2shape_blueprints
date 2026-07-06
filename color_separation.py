@@ -16,7 +16,6 @@ def main():
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     
     # ----------------------------------------
-    # ----------------------------------------
     # 1. Red Mask (Unit 1) - wraps around 0 and 180
     # ----------------------------------------
     lower_red1 = np.array([0, 80, 130])
@@ -36,59 +35,46 @@ def main():
     mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
     
     # ----------------------------------------
+    # Spatial Filtering (Bounding Boxes) to isolate left wing units
     # ----------------------------------------
-    # Spatial Filtering (Bounding Boxes)
-    # Unit 1 (Red): y in [900, 1950], x in [300, 1250]
-    # Unit 2 (Blue): y in [1950, 2500], x in [300, 1400]
-    # ----------------------------------------
-    clean_blue = np.zeros_like(mask_blue)
-    clean_blue[1950:2500, 300:1400] = mask_blue[1950:2500, 300:1400]
+    mask_r_lw = np.zeros_like(mask_red)
+    mask_r_lw[800:2600, 300:1500] = mask_red[800:2600, 300:1500]
 
-    clean_red = np.zeros_like(mask_red)
-    clean_red[900:1950, 300:1250] = mask_red[900:1950, 300:1250]
-
-    # ----------------------------------------
-    # Morphological line connection
-    # Use horizontal and vertical rect kernels to bridge gaps (doors, text)
-    # ----------------------------------------
-    kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 1))
-    kernel_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 15))
+    mask_b_lw = np.zeros_like(mask_blue)
+    mask_b_lw[800:2600, 300:1500] = mask_blue[800:2600, 300:1500]
     
-    clean_red = cv2.morphologyEx(clean_red, cv2.MORPH_CLOSE, kernel_h)
-    clean_red = cv2.morphologyEx(clean_red, cv2.MORPH_CLOSE, kernel_v)
-    
-    clean_blue = cv2.morphologyEx(clean_blue, cv2.MORPH_CLOSE, kernel_h)
-    clean_blue = cv2.morphologyEx(clean_blue, cv2.MORPH_CLOSE, kernel_v)
+    # ----------------------------------------
+    # Detect lines using Probabilistic Hough Transform
+    # ----------------------------------------
+    lines_r = cv2.HoughLinesP(mask_r_lw, rho=1, theta=np.pi/180, threshold=20, minLineLength=25, maxLineGap=40)
+    lines_b = cv2.HoughLinesP(mask_b_lw, rho=1, theta=np.pi/180, threshold=20, minLineLength=25, maxLineGap=40)
     
     # ----------------------------------------
     # Save isolated masks
     # ----------------------------------------
     os.makedirs("cache/color_masks", exist_ok=True)
-    cv2.imwrite("cache/color_masks/mask_red.jpg", clean_red)
-    cv2.imwrite("cache/color_masks/mask_blue.jpg", clean_blue)
+    cv2.imwrite("cache/color_masks/mask_red.jpg", mask_r_lw)
+    cv2.imwrite("cache/color_masks/mask_blue.jpg", mask_b_lw)
     print("Saved color masks to cache/color_masks/")
     
     # ----------------------------------------
-    # Draw contours over grayscale blueprint for validation
+    # Draw lines over grayscale blueprint for validation
     # ----------------------------------------
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     verify_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
     
-    # Find contours
-    contours_red_all, _ = cv2.findContours(clean_red, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    contours_blue_all, _ = cv2.findContours(clean_blue, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    # Filter by size to remove small noise
-    contours_red = [c for c in contours_red_all if cv2.contourArea(c) > 20]
-    contours_blue = [c for c in contours_blue_all if cv2.contourArea(c) > 20]
-    
-    print(f"Detected {len(contours_red)} red contour segments (>20px).")
-    cv2.drawContours(verify_img, contours_red, -1, (0, 0, 255), 4) # Thick Red lines
-    
-    print(f"Detected {len(contours_blue)} blue contour segments (>20px).")
-    cv2.drawContours(verify_img, contours_blue, -1, (255, 0, 0), 4) # Thick Blue lines
-    
-    # Save verification outputs
+    if lines_r is not None:
+        print(f"Detected {len(lines_r)} red line segments.")
+        for line in lines_r:
+            x1, y1, x2, y2 = line.ravel()
+            cv2.line(verify_img, (x1, y1), (x2, y2), (0, 0, 255), 4) # Red lines
+            
+    if lines_b is not None:
+        print(f"Detected {len(lines_b)} blue line segments.")
+        for line in lines_b:
+            x1, y1, x2, y2 = line.ravel()
+            cv2.line(verify_img, (x1, y1), (x2, y2), (255, 0, 0), 4) # Blue lines
+            
     cv2.imwrite("cache/color_masks/verify_walls.jpg", verify_img)
     small_verify = cv2.resize(verify_img, (1600, int(1600 * verify_img.shape[0] / verify_img.shape[1])))
     cv2.imwrite("cache/color_masks/verify_walls_small.jpg", small_verify)

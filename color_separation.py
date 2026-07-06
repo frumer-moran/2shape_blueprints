@@ -36,16 +36,29 @@ def main():
     mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
     
     # ----------------------------------------
-    # Morphological cleaning
     # ----------------------------------------
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    # Spatial Filtering (Bounding Boxes)
+    # Unit 1 (Red): y in [900, 1950], x in [300, 1250]
+    # Unit 2 (Blue): y in [1950, 2500], x in [300, 1400]
+    # ----------------------------------------
+    clean_blue = np.zeros_like(mask_blue)
+    clean_blue[1950:2500, 300:1400] = mask_blue[1950:2500, 300:1400]
+
+    clean_red = np.zeros_like(mask_red)
+    clean_red[900:1950, 300:1250] = mask_red[900:1950, 300:1250]
+
+    # ----------------------------------------
+    # Morphological line connection
+    # Use horizontal and vertical rect kernels to bridge gaps (doors, text)
+    # ----------------------------------------
+    kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 1))
+    kernel_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 15))
     
-    # Close to bridge gaps in the wall lines, open to remove fine print/noise
-    clean_red = cv2.morphologyEx(mask_red, cv2.MORPH_CLOSE, kernel, iterations=2)
-    clean_red = cv2.morphologyEx(clean_red, cv2.MORPH_OPEN, kernel, iterations=1)
+    clean_red = cv2.morphologyEx(clean_red, cv2.MORPH_CLOSE, kernel_h)
+    clean_red = cv2.morphologyEx(clean_red, cv2.MORPH_CLOSE, kernel_v)
     
-    clean_blue = cv2.morphologyEx(mask_blue, cv2.MORPH_CLOSE, kernel, iterations=2)
-    clean_blue = cv2.morphologyEx(clean_blue, cv2.MORPH_OPEN, kernel, iterations=1)
+    clean_blue = cv2.morphologyEx(clean_blue, cv2.MORPH_CLOSE, kernel_h)
+    clean_blue = cv2.morphologyEx(clean_blue, cv2.MORPH_CLOSE, kernel_v)
     
     # ----------------------------------------
     # Save isolated masks
@@ -70,10 +83,10 @@ def main():
     contours_blue = [c for c in contours_blue_all if cv2.contourArea(c) > 20]
     
     print(f"Detected {len(contours_red)} red contour segments (>20px).")
-    cv2.drawContours(verify_img, contours_red, -1, (0, 0, 255), 3) # Red lines
+    cv2.drawContours(verify_img, contours_red, -1, (0, 0, 255), 4) # Thick Red lines
     
     print(f"Detected {len(contours_blue)} blue contour segments (>20px).")
-    cv2.drawContours(verify_img, contours_blue, -1, (255, 0, 0), 3) # Blue lines
+    cv2.drawContours(verify_img, contours_blue, -1, (255, 0, 0), 4) # Thick Blue lines
     
     # Save verification outputs
     cv2.imwrite("cache/color_masks/verify_walls.jpg", verify_img)

@@ -69,11 +69,28 @@ def main():
     # ----------------------------------------
     # Find closest parallel pairs (Wall thickness constraint)
     # ----------------------------------------
+    # Empty zone helper to prune margins and central background spaces
+    def is_in_empty_zone(p):
+        x, y = p
+        # Margins
+        if x < 300 or x > 3150 or y < 900 or y > 2800:
+            return True
+        # Courtyard open spaces (between Left and Right wings)
+        if 1250 < x < 2300:
+            if y < 1400 or y > 2200:
+                return True
+        return False
+
     n_lines = len(filtered_lines)
     best_partner = {} # maps line_idx -> (partner_idx, distance)
     
     for i in range(n_lines):
         li = filtered_lines[i]
+        # Prune segments whose midpoints lie in background empty zones
+        mid = (li['p1'] + li['q1']) / 2.0
+        if is_in_empty_zone(mid):
+            continue
+            
         min_dist = float('inf')
         min_idx = -1
         for j in range(n_lines):
@@ -122,7 +139,106 @@ def main():
             pair_key = tuple(sorted([i, j]))
             seen_pairs.add(pair_key)
             
-    print(f"Found {len(seen_pairs)} mutual parallel line pairs representing walls.")
+    # Compute centerlines and filter by interior grayscale intensity
+    # (Walls have dark pencil/hatch shading; crease/dimensions have light paper interior)
+    def get_interior_intensity(li, lj):
+        p1 = li['p1']
+        q1 = li['q1']
+        p2 = lj['p1']
+        q2 = lj['q1']
+        if np.dot(li['u'], lj['u']) < 0:
+            p2, q2 = q2, p2
+        p_center = (p1 + p2) / 2.0
+        q_center = (q1 + q2) / 2.0
+        vals = []
+        for t in np.linspace(0.1, 0.9, 10):
+            pt = (p_center + t * (q_center - p_center)).astype(int)
+            vals.append(gray[pt[1], pt[0]])
+        return np.mean(vals)
+
+    wall_segments = []
+    for i, j in seen_pairs:
+        li = filtered_lines[i]
+        lj = filtered_lines[j]
+        if get_interior_intensity(li, lj) < 165: # Keep only dark interior pairs
+            p1 = li['p1']
+            q1 = li['q1']
+            p2 = lj['p1']
+            q2 = lj['q1']
+            if np.dot(li['u'], lj['u']) < 0:
+                p2, q2 = q2, p2
+            p_center = (p1 + p2) / 2.0
+            q_center = (q1 + q2) / 2.0
+            wall_segments.append({
+                'pair': (i, j),
+                'center': (p_center, q_center)
+            })
+
+    # Filter by connectivity graph: a wall must connect to at least 1 other wall,
+    # and we prune small isolated noise subgraphs (size < 6 segments).
+    def point_to_segment_dist(p, seg_start, seg_end):
+        v = seg_end - seg_start
+        w = p - seg_start
+        c1 = np.dot(w, v)
+        if c1 <= 0:
+            return np.linalg.norm(p - seg_start)
+        c2 = np.dot(v, v)
+        if c2 <= c1:
+            return np.linalg.norm(p - seg_end)
+        b = c1 / c2
+        pb = seg_start + b * v
+        return np.linalg.norm(p - pb)
+
+    def segments_connect(s1, s2, thresh=22):
+        p1, q1 = s1
+        p2, q2 = s2
+        d1 = np.linalg.norm(p1 - p2)
+        d2 = np.linalg.norm(p1 - q2)
+        d3 = np.linalg.norm(q1 - p2)
+        d4 = np.linalg.norm(q1 - q2)
+        if min(d1, d2, d3, d4) < thresh:
+            return True
+        if point_to_segment_dist(p1, p2, q2) < thresh: return True
+        if point_to_segment_dist(q1, p2, q2) < thresh: return True
+        if point_to_segment_dist(p2, p1, q1) < thresh: return True
+        if point_to_segment_dist(q2, p1, q1) < thresh: return True
+        return False
+
+    n_walls = len(wall_segments)
+    adj = {i: [] for i in range(n_walls)}
+    for i in range(n_walls):
+        s1 = wall_segments[i]['center']
+        for j in range(i + 1, n_walls):
+            s2 = wall_segments[j]['center']
+            if segments_connect(s1, s2):
+                adj[i].append(j)
+                adj[j].append(i)
+
+    visited = set()
+    components = []
+    for i in range(n_walls):
+        if i not in visited:
+            comp = []
+            queue = [i]
+            visited.add(i)
+            while queue:
+                node = queue.pop(0)
+                comp.append(node)
+                for neighbor in adj[node]:
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append(neighbor)
+            components.append(comp)
+
+    # Keep only components of size >= 6
+    large_components = [c for c in components if len(c) >= 6]
+    keep_indices = set()
+    for c in large_components:
+        for node in c:
+            keep_indices.add(node)
+
+    connected_pairs = [wall_segments[idx]['pair'] for idx in keep_indices]
+    print(f"Filtered wall pairs to {len(connected_pairs)} connected segments.")
     
     # ----------------------------------------
     # Render detected walls with coordinate grid
@@ -130,7 +246,7 @@ def main():
     canvas = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
     draw_grid(canvas)
     
-    for i, j in seen_pairs:
+    for i, j in connected_pairs:
         li = filtered_lines[i]
         lj = filtered_lines[j]
         

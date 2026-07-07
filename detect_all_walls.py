@@ -87,10 +87,10 @@ def main():
             if diff_theta > 0.08:
                 continue
                 
-            # 2. Perpendicular distance check (6 to 16 pixels wall thickness range)
+            # 2. Perpendicular distance check (5 to 18 pixels wall thickness range)
             p_diff = lj['p1'] - li['p1']
             dist = abs(np.dot(p_diff, li['n']))
-            if not (6 <= dist <= 16):
+            if not (5.0 <= dist <= 18):
                 continue
                 
             # 3. Overlap check along the line direction
@@ -105,9 +105,12 @@ def main():
             overlap_len = overlap_end - overlap_start
             
             if overlap_len > 15: # Significant overlap required
-                if dist < min_dist:
-                    min_dist = dist
-                    min_idx = j
+                # Overlap ratio check to filter out noise lines (e.g., short folds/dimensions matching long walls)
+                max_len = max(li['length'], lj['length'])
+                if (overlap_len / max_len) > 0.4:
+                    if dist < min_dist:
+                        min_dist = dist
+                        min_idx = j
                     
         if min_idx != -1:
             best_partner[i] = (min_idx, min_dist)
